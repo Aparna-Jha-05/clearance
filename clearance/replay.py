@@ -62,7 +62,7 @@ def replay_paired() -> list[dict]:
         da = evaluate_record(rec, tool_a, pol, f"{rec.id}-A")
         db = evaluate_record(rec, tool_b, pol, f"{rec.id}-B")
         out.append({
-            "id": rec.id, "response": rec.response,
+            "id": rec.id, "response": rec.response, "use_case": rec.use_case,
             "A": {"tool": tool_a, "reversibility": da.action.reversibility if da.action else "reversible",
                   "verdict": da.verdict, "band": da.band,
                   "expected": rec.gold.expected_verdict if rec.gold else None},

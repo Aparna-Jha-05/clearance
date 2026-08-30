@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
-import { Card, Verdict } from "../../components/ui";
+import { api, sample } from "../lib/api";
+import { Card, Verdict, SampleBanner } from "../../components/ui";
 
 function norm(v: string) {
   return v === "block_escalate" ? "escalate" : v;
@@ -13,18 +13,20 @@ export default function LedgerPage() {
   const [uc, setUc] = useState("");
   const [verdict, setVerdict] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sampleMode, setSampleMode] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function load() {
     setErr(null);
     try {
       let led = await api.ledger(300, uc || undefined, verdict || undefined);
-      if (!led.rows?.length && !uc && !verdict) {
+      if (!led.rows?.length && !led._sample && !uc && !verdict) {
         await api.seed();
         led = await api.ledger(300);
       }
       setRows(led.rows || []);
       setVerify(await api.verify());
+      setSampleMode(sample.active || !!led._sample);
     } catch (e: any) {
       setErr(e.message + " — start the gateway locally (uvicorn on :8000) or set NEXT_PUBLIC_API_BASE to your hosted backend.");
     }
@@ -63,11 +65,12 @@ export default function LedgerPage() {
   const ok = verify?.ok;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
+      {sampleMode && <SampleBanner />}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold">Ledger</h1>
-          <p className="text-xs text-muted">
+          <h1 className="text-xl font-semibold">Ledger</h1>
+          <p className="mt-1 text-sm text-muted">
             Append-only, hash-chained. Every row commits to the previous row&apos;s
             hash and carries the deciding policy_hash.
           </p>

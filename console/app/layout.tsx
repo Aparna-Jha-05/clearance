@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ThemeToggle } from "../components/theme";
+import { Logo } from "../components/logo";
 
 export const metadata: Metadata = {
   title: "CLEARANCE — decision layer console",
@@ -21,9 +22,9 @@ function Nav() {
     <header className="sticky top-0 z-20 border-b border-edge bg-bg/85 backdrop-blur">
       <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-6 py-3">
         <div className="flex items-center gap-2.5">
-          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-accent to-escal" />
-          <span className="text-sm font-semibold tracking-wide">CLEARANCE</span>
-          <span className="hidden text-xs text-muted sm:inline">
+          <Logo size={26} />
+          <span className="text-sm font-semibold tracking-[0.14em]">CLEARANCE</span>
+          <span className="hidden text-xs text-muted lg:inline">
             · the decision layer above detection
           </span>
         </div>
@@ -58,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Nav />
-        <main className="mx-auto max-w-[1400px] px-6 py-6">{children}</main>
+        <main className="mx-auto max-w-[1400px] px-6 py-8">{children}</main>
       </body>
     </html>
   );

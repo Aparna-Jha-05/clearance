@@ -1,0 +1,52 @@
+{
+  "policies": [
+    {
+      "name": "decision-support.eu",
+      "pack": "decision-support",
+      "jurisdiction": "EU",
+      "risk_appetite": "low",
+      "policy_hash": "2996768bb658ad79",
+      "operating_point": {
+        "chosen_by": "Dr. Elena Fischer, Clinical Safety Lead",
+        "chosen_on": "2026-09-01",
+        "rationale": "lowest risk appetite of any pack; irreversible advice is escalated from the medium band upward"
+      }
+    },
+    {
+      "name": "internal-copilot.in",
+      "pack": "internal-copilot",
+      "jurisdiction": "IN",
+      "risk_appetite": "low",
+      "policy_hash": "87a4ac9058aaa077",
+      "operating_point": {
+        "chosen_by": "Ananya Rao, People-Systems Risk Owner",
+        "chosen_on": "2026-09-01",
+        "rationale": "privacy-weighted; fabricated named-person detail is the dominant failure mode for an internal copilot"
+      }
+    },
+    {
+      "name": "support-assistant.eu",
+      "pack": "support-assistant",
+      "jurisdiction": "EU",
+      "risk_appetite": "low",
+      "policy_hash": "0e762da2e82804d0",
+      "operating_point": {
+        "chosen_by": "Priya Nair, Support Risk Owner",
+        "chosen_on": "2026-09-01",
+        "rationale": "recall prioritised over precision for irreversible actions; EU refund exposure is high-blast-radius"
+      }
+    },
+    {
+      "name": "support-assistant.in",
+      "pack": "support-assistant",
+      "jurisdiction": "IN",
+      "risk_appetite": "medium",
+      "policy_hash": "842f84bb24e5dac7",
+      "operating_point": {
+        "chosen_by": "Rahul Menon, IN Support Risk Owner",
+        "chosen_on": "2026-09-01",
+        "rationale": "medium appetite; local refund amounts lower blast radius, hold-for-review preferred over hard block"
+      }
+    }
+  ]
+}

@@ -16,41 +16,85 @@ function resolveBase(): string {
 
 export const API = resolveBase();
 
+// Set true whenever a call falls back to committed sample data (e.g. the
+// backend is asleep on a free-tier cold start). Pages surface a small banner.
+export const sample = { active: false };
+
 async function j(path: string, opts?: RequestInit) {
-  if (!API) {
-    throw new Error(
-      "NEXT_PUBLIC_API_BASE is not set — point it at your deployed backend URL"
-    );
+  if (!API) throw new Error("no-backend");
+  // fast timeout so a sleeping backend falls back quickly instead of hanging
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const r = await fetch(`${API}${path}`, {
+      ...opts,
+      headers: { "Content-Type": "application/json", ...(opts?.headers || {}) },
+      cache: "no-store",
+      signal: ctrl.signal,
+    });
+    if (!r.ok) throw new Error(`${path} -> ${r.status}`);
+    return r.json();
+  } finally {
+    clearTimeout(t);
   }
-  const r = await fetch(`${API}${path}`, {
-    ...opts,
-    headers: { "Content-Type": "application/json", ...(opts?.headers || {}) },
-    cache: "no-store",
-  });
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
-  return r.json();
+}
+
+// Try live; on any failure read the committed sample file and flag sample mode.
+async function withSample(path: string, sampleFile: string, opts?: RequestInit) {
+  try {
+    return await j(path, opts);
+  } catch (e) {
+    const r = await fetch(`/sample/${sampleFile}`, { cache: "force-cache" });
+    if (!r.ok) throw e;
+    sample.active = true;
+    return { ...(await r.json()), _sample: true };
+  }
 }
 
 export const api = {
   health: () => j("/health"),
-  policies: () => j("/api/policies"),
+  policies: () => withSample("/api/policies", "policies.json"),
   ledger: (limit = 200, use_case?: string, verdict?: string) => {
     const q = new URLSearchParams({ limit: String(limit) });
     if (use_case) q.set("use_case", use_case);
     if (verdict) q.set("verdict", verdict);
-    return j(`/api/ledger?${q.toString()}`);
+    return withSample(`/api/ledger?${q.toString()}`, "ledger.json");
   },
-  verify: () => j("/api/ledger/verify"),
-  tamper: (seq: number, verdict = "allow") =>
-    j("/api/ledger/tamper", { method: "POST", body: JSON.stringify({ seq, verdict }) }),
-  seed: () => j("/api/seed", { method: "POST" }),
-  paired: () => j("/api/replay/paired"),
-  agentic: () => j("/api/replay/agentic"),
+  verify: () => withSample("/api/ledger/verify", "verify.json"),
+  paired: () => withSample("/api/replay/paired", "paired.json"),
+  agentic: () => withSample("/api/replay/agentic", "agentic.json"),
   recompute: (use_case: string, overrides: any) =>
-    j("/api/tuning/recompute", {
-      method: "POST",
-      body: JSON.stringify({ use_case, overrides }),
-    }),
+    withSample(
+      "/api/tuning/recompute",
+      `tuning-${use_case}.json`,
+      { method: "POST", body: JSON.stringify({ use_case, overrides }) }
+    ),
+  // interactive, live-only: degrade gracefully in sample mode instead of throwing
+  seed: async () => {
+    try {
+      return await j("/api/seed", { method: "POST" });
+    } catch {
+      sample.active = true;
+      return { _sample: true, seeded: 0 };
+    }
+  },
+  tamper: async (seq: number, verdict = "allow") => {
+    try {
+      return await j("/api/ledger/tamper", {
+        method: "POST",
+        body: JSON.stringify({ seq, verdict }),
+      });
+    } catch {
+      sample.active = true;
+      // simulate the tamper so the "chain broken" demo still shows offline
+      return {
+        _sample: true,
+        tampered: true,
+        verify: { ok: false, broken_at: seq, length: 0,
+                  reason: "row_hash mismatch (row was mutated)" },
+      };
+    }
+  },
 };
 
 export const VERDICT_COLOR: Record<string, string> = {

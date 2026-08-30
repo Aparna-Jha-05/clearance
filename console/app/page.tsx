@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api } from "./lib/api";
-import { Card, Verdict, Chip, Meter, Legend, bandTone } from "../components/ui";
+import { api, sample } from "./lib/api";
+import { Card, Verdict, Chip, Meter, Legend, SampleBanner, bandTone } from "../components/ui";
 
 function norm(v: string) {
   return v === "block_escalate" ? "escalate" : v;
@@ -15,29 +15,36 @@ const VERDICT_LEGEND = [
 ];
 
 // ---- the hero: same text, two actions, two verdicts ------------------------
+const PAIR_LABEL: Record<string, string> = {
+  "support-assistant": "Support · fabricated refund",
+  "internal-copilot": "Copilot · fabricated salary",
+  "decision-support": "Decision · unsupported advice",
+};
+
 function PairedHero({ pairs }: any) {
+  const [idx, setIdx] = useState(0);
   if (!pairs?.length) return null;
-  const p = pairs[0];
+  const p = pairs[Math.min(idx, pairs.length - 1)];
+
   const Side = ({ s, label }: any) => (
-    <div className="flex-1 rounded-lg border border-edge bg-panel2 p-4">
-      <div className="mb-2 flex items-center justify-between">
+    <div className="flex-1 rounded-xl border border-edge bg-panel2 p-5">
+      <div className="mb-3 flex items-center justify-between">
         <span className="text-[11px] uppercase tracking-wider text-muted">{label}</span>
         <Verdict v={norm(s.verdict)} />
       </div>
-      <div className="mono text-xs text-muted">
+      <div className="mono text-sm text-muted">
         action <span className="text-fg">{s.tool}</span>
-        <span className="mx-1">·</span>
-        <span
-          className={
-            s.reversibility === "irreversible" ? "text-bad" : "text-good"
-          }
-        >
+      </div>
+      <div className="mt-1.5 flex items-center gap-2 text-xs">
+        <span className={s.reversibility === "irreversible" ? "text-bad" : "text-good"}>
           {s.reversibility}
         </span>
+        <span className="text-muted">·</span>
+        <span className="mono text-muted">band {s.band}</span>
       </div>
-      <div className="mt-1 mono text-[11px] text-muted">band {s.band}</div>
     </div>
   );
+
   return (
     <Card
       title="The paired verdict — identical text, two actions, two verdicts"
@@ -47,21 +54,42 @@ function PairedHero({ pairs }: any) {
         </span>
       }
     >
-      <div className="rounded-lg border border-edge bg-ink/60 p-3">
+      {/* example switcher */}
+      {pairs.length > 1 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {pairs.map((pp: any, i: number) => (
+            <button
+              key={pp.id}
+              onClick={() => setIdx(i)}
+              className={`rounded-lg border px-3 py-1.5 text-xs transition ${
+                i === idx
+                  ? "border-accent/50 bg-accent/10 text-accent"
+                  : "border-edge bg-panel2 text-muted hover:text-fg"
+              }`}
+            >
+              {PAIR_LABEL[pp.use_case] || `Example ${i + 1}`}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-edge bg-bg/50 p-5">
         <span className="text-[10px] uppercase tracking-wider text-muted">
           one model response
         </span>
-        <p className="mt-1 text-sm leading-relaxed text-fg">“{p.response}”</p>
+        <p className="mt-2 text-base leading-relaxed text-fg">“{p.response}”</p>
       </div>
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+
+      <div className="mt-5 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
         <Side s={p.A} label="context A" />
-        <div className="flex items-center justify-center px-1 text-2xl text-muted">→</div>
+        <div className="flex items-center justify-center text-2xl text-muted sm:px-1">→</div>
         <Side s={p.B} label="context B" />
       </div>
-      <p className="mt-3 text-xs text-muted">
-        Same fabricated sentence. As a reversible draft it is annotated; driving an
-        irreversible refund it is blocked and escalated. Detection is identical —
-        the <span className="text-fg">decision</span> is not.
+
+      <p className="mt-5 text-sm leading-relaxed text-muted">
+        Same fabricated sentence, two contexts. As a reversible draft it is
+        annotated; driving an irreversible action it is blocked and escalated.
+        Detection is identical — the <span className="text-fg">decision</span> is not.
       </p>
     </Card>
   );
@@ -229,13 +257,14 @@ export default function LivePage() {
   const [rows, setRows] = useState<any[]>([]);
   const [pick, setPick] = useState<any>(null);
   const [busy, setBusy] = useState(false);
+  const [sampleMode, setSampleMode] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function load() {
     setErr(null);
     try {
       let led = await api.ledger(200);
-      if (!led.rows?.length) {
+      if (!led.rows?.length && !led._sample) {
         await api.seed();
         led = await api.ledger(200);
       }
@@ -243,6 +272,7 @@ export default function LivePage() {
       setPairs(p.pairs || []);
       setAg(a);
       setRows(led.rows || []);
+      setSampleMode(sample.active || !!led._sample || !!p._sample || !!a._sample);
     } catch (e: any) {
       setErr(e.message + " — start the gateway locally (uvicorn on :8000) or set NEXT_PUBLIC_API_BASE to your hosted backend.");
     }
@@ -261,11 +291,12 @@ export default function LivePage() {
   }, []);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
+      {sampleMode && <SampleBanner />}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold">Live decisions</h1>
-          <p className="text-xs text-muted">
+          <h1 className="text-xl font-semibold">Live decisions</h1>
+          <p className="mt-1 text-sm text-muted">
             Every request: 100% L0 coverage, escalation only when uncertain,
             immutable ledger row.
           </p>
@@ -273,14 +304,14 @@ export default function LivePage() {
         <button
           onClick={reseed}
           disabled={busy}
-          className="rounded-lg border border-edge bg-panel2 px-3 py-1.5 text-xs font-medium hover:bg-edge disabled:opacity-50"
+          className="shrink-0 rounded-lg border border-edge bg-panel2 px-3.5 py-2 text-xs font-medium hover:bg-edge disabled:opacity-50"
         >
           {busy ? "replaying…" : "↻ replay corpus"}
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-edge bg-panel2/50 px-4 py-2">
-        <span className="text-[11px] text-muted">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-edge bg-panel2/50 px-5 py-3">
+        <span className="text-xs text-muted">
           <span className="text-fg">How to read:</span> each request is scored, then a
           verdict is chosen by the reversibility of its action. Same text can get
           different verdicts.
@@ -296,7 +327,7 @@ export default function LivePage() {
 
       <PairedHero pairs={pairs} />
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Agentic ag={ag} />
         <Feed rows={rows} onPick={setPick} />
       </div>

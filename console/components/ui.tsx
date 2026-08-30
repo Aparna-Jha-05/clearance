@@ -1,18 +1,18 @@
 "use client";
 import { catClass, verdictClass } from "../app/lib/api";
 
-export function Card({ title, right, children, className = "" }: any) {
+export function Card({ title, right, children, className = "", bodyClass = "p-5" }: any) {
   return (
     <div className={`rounded-xl border border-edge bg-panel ${className}`}>
       {(title || right) && (
-        <div className="flex items-center justify-between border-b border-edge px-4 py-2.5">
+        <div className="flex items-center justify-between gap-3 border-b border-edge px-5 py-3">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
             {title}
           </h3>
           {right}
         </div>
       )}
-      <div className="p-4">{children}</div>
+      <div className={bodyClass}>{children}</div>
     </div>
   );
 }
@@ -89,4 +89,14 @@ export function Legend({ items }: { items: { swatch: string; label: string; hint
 
 export function bandTone(band: string) {
   return band === "high" ? "bad" : band === "medium" ? "warn" : "good";
+}
+
+export function SampleBanner() {
+  return (
+    <div className="rounded-xl border border-warn/40 bg-warn/10 px-5 py-3 text-xs text-warn">
+      Showing <span className="font-semibold">committed sample data</span> — the live
+      gateway isn&apos;t reachable (start it locally, or its host may be waking from a
+      cold start). Interactive buttons are read-only until it connects.
+    </div>
+  );
 }

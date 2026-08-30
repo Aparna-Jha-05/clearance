@@ -4,8 +4,8 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceDot,
 } from "recharts";
-import { api } from "../lib/api";
-import { Card, Stat } from "../../components/ui";
+import { api, sample } from "../lib/api";
+import { Card, Stat, SampleBanner } from "../../components/ui";
 import { useThemeColors } from "../../components/theme";
 
 // plain-language help shown on hover over each metric tile
@@ -52,7 +52,7 @@ function Slider({ label, value, min, max, step, onChange }: any) {
   );
 }
 
-function Panel({ initialUseCase }: { initialUseCase: string }) {
+function Panel({ initialUseCase, onSample }: { initialUseCase: string; onSample?: () => void }) {
   const [uc, setUc] = useState(initialUseCase);
   const [op, setOp] = useState<OP>(DEFAULTS[initialUseCase]);
   const [m, setM] = useState<any>(null);
@@ -79,6 +79,7 @@ function Panel({ initialUseCase }: { initialUseCase: string }) {
         });
         setM(res);
         setMs(Math.round(performance.now() - t0));
+        if (res._sample || sample.active) onSample?.();
       } catch {
         /* gateway down */
       }
@@ -170,22 +171,24 @@ function Panel({ initialUseCase }: { initialUseCase: string }) {
 }
 
 export default function TuningPage() {
+  const [sampleMode, setSampleMode] = useState(false);
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
+      {sampleMode && <SampleBanner />}
       <div>
-        <h1 className="text-lg font-semibold">Operating point</h1>
-        <p className="text-xs text-muted">
+        <h1 className="text-xl font-semibold">Operating point</h1>
+        <p className="mt-1 max-w-3xl text-sm text-muted">
           The threshold set is a signed governance artifact. Two use cases,
           deliberately different operating points — different risk tolerance,
           visible side by side. Recompute runs against the labelled corpus in
-          &lt; 300ms.
+          under 300ms.
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <Panel initialUseCase="support-assistant" />
-        <Panel initialUseCase="decision-support" />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Panel initialUseCase="support-assistant" onSample={() => setSampleMode(true)} />
+        <Panel initialUseCase="decision-support" onSample={() => setSampleMode(true)} />
       </div>
-      <p className="text-xs text-muted">
+      <p className="max-w-3xl text-sm text-muted">
         Notice decision-support sits at a tighter point (lower l0_high, escalates
         irreversible advice from the medium band) than support-assistant. Same
         engine, same corpus, different appetite — that is the product.
