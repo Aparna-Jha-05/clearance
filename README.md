@@ -19,6 +19,12 @@ with the commands below — no API key required. A 20-second screen capture of t
 moment belongs at the top of the repo; the runsheet is in
 [`docs/demo-runsheet.md`](docs/demo-runsheet.md).*
 
+**▶ Live console:** `https://<your-app>.vercel.app` · **API:** `https://<your-app>.onrender.com`
+(the deployed console shows committed sample data if the backend is cold, then
+switches to live automatically — it never shows a blank screen). Deploy it
+yourself in ~10 min: [`DEPLOY.md`](DEPLOY.md). Recording a demo video?
+[`docs/demo-video-script.md`](docs/demo-video-script.md).
+
 ---
 
 ## Problem (three sentences)
