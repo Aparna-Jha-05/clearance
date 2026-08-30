@@ -17,7 +17,7 @@ when it would drive a refund. Identical detection, two verdicts.
 *The pitch: one response, two action contexts, two verdicts. Reproduce it live
 with the commands below — no API key required. 
 
-Live app: https://clearance-nine.vercel.app/
+Live app: https://clearance-nine.vercel.app/ ; 
 https://clearance-gateway.onrender.com/
 
 ---
