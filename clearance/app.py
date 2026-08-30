@@ -31,6 +31,31 @@ ledger.init()
 feedback.init()
 
 
+@app.on_event("startup")
+def _seed_on_boot():
+    """Hosted backends have an ephemeral filesystem, so seed the ledger on boot
+    (if empty) — the deployed console then shows real decisions immediately
+    instead of an empty table on a cold start."""
+    try:
+        if not ledger.rows(limit=1):
+            replay.replay_all(write_ledger=True)
+    except Exception:
+        pass
+
+
+@app.get("/")
+def root():
+    return {
+        "service": "CLEARANCE gateway",
+        "tagline": "gate the action, not the answer",
+        "openai_compatible_endpoint": "/v1/chat/completions",
+        "health": "/health",
+        "console_api": ["/api/policies", "/api/ledger", "/api/replay/paired",
+                        "/api/replay/agentic", "/api/tuning/recompute"],
+        "repo": "https://github.com/Aparna-Jha-05/clearance",
+    }
+
+
 # --- verdict -> content transform (text is never HELD, only annotated/redacted)
 def _apply_to_content(content: str, decision) -> str:
     v = decision.verdict

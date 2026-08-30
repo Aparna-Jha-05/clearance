@@ -1,8 +1,27 @@
 // One place that knows where the gateway lives. CORS is open on the API.
-export const API =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+// Set NEXT_PUBLIC_API_BASE (a Vercel env var) to your deployed backend URL;
+// Next.js inlines it at BUILD time, so set it before deploying. Locally it
+// defaults to the uvicorn dev server on :8000.
+function resolveBase(): string {
+  const env = process.env.NEXT_PUBLIC_API_BASE;
+  if (env) return env.replace(/\/$/, "");
+  if (
+    typeof window !== "undefined" &&
+    !["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ) {
+    return ""; // deployed with no backend configured -> surface a clear error
+  }
+  return "http://localhost:8000";
+}
+
+export const API = resolveBase();
 
 async function j(path: string, opts?: RequestInit) {
+  if (!API) {
+    throw new Error(
+      "NEXT_PUBLIC_API_BASE is not set — point it at your deployed backend URL"
+    );
+  }
   const r = await fetch(`${API}${path}`, {
     ...opts,
     headers: { "Content-Type": "application/json", ...(opts?.headers || {}) },

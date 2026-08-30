@@ -1,0 +1,18 @@
+# Render.com blueprint for the CLEARANCE FastAPI gateway.
+# New > Blueprint > point at this repo. Render reads this file and provisions
+# the service. Free plan is fine for a demo (it sleeps when idle and cold-starts
+# in ~30s; the console re-seeds automatically on the first request).
+services:
+  - type: web
+    name: clearance-gateway
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn clearance.app:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: CLEARANCE_OFFLINE
+        value: "1"           # runs on committed corpus + fixtures, no keys
+      - key: PYTHON_VERSION
+        value: "3.11.9"

@@ -150,6 +150,13 @@ python tests\test_clearance.py
 The six required behaviors: paired verdict, category overlap, latch fail-closed,
 ledger tamper detection, policy swap, agentic accumulator block.
 
+## Deploy (console on Vercel, gateway on Render/Railway)
+
+The console is a Next.js app in `console/`; the gateway is a stateful FastAPI
+process (hash-chained ledger) that needs a real host, not the edge. Deploy the
+backend first, then set `NEXT_PUBLIC_API_BASE` on Vercel to its URL. Full steps:
+[`DEPLOY.md`](DEPLOY.md).
+
 ## Docs
 - [`docs/architecture.md`](docs/architecture.md)
 - [`docs/competitive-landscape.md`](docs/competitive-landscape.md)

@@ -233,7 +233,7 @@ export default function LivePage() {
       setAg(a);
       setRows(led.rows || []);
     } catch (e: any) {
-      setErr(e.message + " — is the gateway running on :8000?");
+      setErr(e.message + " — start the gateway locally (uvicorn on :8000) or set NEXT_PUBLIC_API_BASE to your hosted backend.");
     }
   }
   async function reseed() {
