@@ -1,11 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "./lib/api";
-import { Card, Verdict, Chip, Meter, bandTone } from "../components/ui";
+import { Card, Verdict, Chip, Meter, Legend, bandTone } from "../components/ui";
 
 function norm(v: string) {
   return v === "block_escalate" ? "escalate" : v;
 }
+
+const VERDICT_LEGEND = [
+  { swatch: "bg-good", label: "allow", hint: "action proceeds" },
+  { swatch: "bg-accent", label: "annotate", hint: "action proceeds; text flagged with a caveat" },
+  { swatch: "bg-warn", label: "hold / redact", hint: "action parked for review, or claim removed" },
+  { swatch: "bg-escal", label: "escalate", hint: "action blocked and routed to a human" },
+];
 
 // ---- the hero: same text, two actions, two verdicts ------------------------
 function PairedHero({ pairs }: any) {
@@ -18,7 +25,7 @@ function PairedHero({ pairs }: any) {
         <Verdict v={norm(s.verdict)} />
       </div>
       <div className="mono text-xs text-muted">
-        action <span className="text-white">{s.tool}</span>
+        action <span className="text-fg">{s.tool}</span>
         <span className="mx-1">·</span>
         <span
           className={
@@ -44,7 +51,7 @@ function PairedHero({ pairs }: any) {
         <span className="text-[10px] uppercase tracking-wider text-muted">
           one model response
         </span>
-        <p className="mt-1 text-sm leading-relaxed text-white">“{p.response}”</p>
+        <p className="mt-1 text-sm leading-relaxed text-fg">“{p.response}”</p>
       </div>
       <div className="mt-3 flex flex-col gap-3 sm:flex-row">
         <Side s={p.A} label="context A" />
@@ -54,7 +61,7 @@ function PairedHero({ pairs }: any) {
       <p className="mt-3 text-xs text-muted">
         Same fabricated sentence. As a reversible draft it is annotated; driving an
         irreversible refund it is blocked and escalated. Detection is identical —
-        the <span className="text-white">decision</span> is not.
+        the <span className="text-fg">decision</span> is not.
       </p>
     </Card>
   );
@@ -65,6 +72,10 @@ function Agentic({ ag }: any) {
   if (!ag?.turns?.length) return null;
   return (
     <Card title="Agentic compounding — turn 6 blocked on a turn-3 premise">
+      <div className="mb-2 flex items-center justify-between text-[10px] text-muted">
+        <span>bar = accumulated premise risk across the conversation</span>
+        <span><span className="text-fg">clearance</span> vs a naive <span className="text-fg">per-response</span> check</span>
+      </div>
       <div className="space-y-1.5">
         {ag.turns.map((t: any) => (
           <div
@@ -73,7 +84,7 @@ function Agentic({ ag }: any) {
           >
             <span className="mono text-xs text-muted">#{t.turn}</span>
             <div className="min-w-0">
-              <div className="truncate text-xs text-white">{t.response}</div>
+              <div className="truncate text-xs text-fg">{t.response}</div>
               <div className="mt-1 w-40">
                 <Meter value={t.accumulated_risk} tone={t.accumulated_risk > 0.6 ? "bad" : "warn"} />
               </div>
@@ -107,11 +118,11 @@ function Feed({ rows, onPick }: any) {
           <thead className="sticky top-0 bg-panel text-[10px] uppercase tracking-wider text-muted">
             <tr>
               <th className="pb-2 pr-2">use case</th>
-              <th className="pb-2 pr-2">CEG</th>
-              <th className="pb-2 pr-2">categories</th>
-              <th className="pb-2 pr-2">tier</th>
+              <th className="pb-2 pr-2" title="confidence-evidence gap: how confidently the answer commits vs how well it is supported">CEG ⓘ</th>
+              <th className="pb-2 pr-2" title="risk types, which can overlap (e.g. hallucination + privacy)">categories</th>
+              <th className="pb-2 pr-2" title="how far it escalated: L0 (free) → L1 → L2 → human">tier</th>
               <th className="pb-2 pr-2">verdict</th>
-              <th className="pb-2 pr-2 text-right">+ms</th>
+              <th className="pb-2 pr-2 text-right" title="latency CLEARANCE added, in milliseconds">added ms</th>
             </tr>
           </thead>
           <tbody>
@@ -197,7 +208,7 @@ function Detail({ d, onClose }: any) {
         )}
         <div className="mt-3">
           <div className="text-[10px] uppercase tracking-wider text-muted">rationale</div>
-          <p className="mt-1 text-xs text-white">{d.rationale}</p>
+          <p className="mt-1 text-xs text-fg">{d.rationale}</p>
         </div>
       </div>
     </div>
@@ -207,7 +218,7 @@ function KV({ k, v }: any) {
   return (
     <div className="rounded border border-edge bg-panel2 px-2 py-1">
       <div className="text-[9px] uppercase text-muted">{k}</div>
-      <div className="mono text-white">{String(v)}</div>
+      <div className="mono text-fg">{String(v)}</div>
     </div>
   );
 }
@@ -266,6 +277,15 @@ export default function LivePage() {
         >
           {busy ? "replaying…" : "↻ replay corpus"}
         </button>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-edge bg-panel2/50 px-4 py-2">
+        <span className="text-[11px] text-muted">
+          <span className="text-fg">How to read:</span> each request is scored, then a
+          verdict is chosen by the reversibility of its action. Same text can get
+          different verdicts.
+        </span>
+        <Legend items={VERDICT_LEGEND} />
       </div>
 
       {err && (

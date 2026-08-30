@@ -6,6 +6,19 @@ import {
 } from "recharts";
 import { api } from "../lib/api";
 import { Card, Stat } from "../../components/ui";
+import { useThemeColors } from "../../components/theme";
+
+// plain-language help shown on hover over each metric tile
+const METRIC_HELP: Record<string, string> = {
+  precision: "of everything we flagged, the share that was truly risky",
+  recall: "of everything truly risky, the share we caught",
+  F2: "combined score that weights recall over precision (safety-leaning)",
+  "FP rate": "benign requests we wrongly flagged (false alarms)",
+  "FN rate": "risky requests we missed",
+  "escal / 1k": "irreversible actions sent to a human, per 1,000 requests",
+  "reviewer hrs/wk": "estimated human review load at this operating point",
+  "$ / 1k": "model spend on the paid tiers, per 1,000 requests",
+};
 
 const USE_CASES = [
   { id: "support-assistant", label: "Support assistant (EU)" },
@@ -28,7 +41,7 @@ function Slider({ label, value, min, max, step, onChange }: any) {
     <label className="block">
       <div className="flex items-center justify-between text-[11px]">
         <span className="text-muted">{label}</span>
-        <span className="mono text-white">{value.toFixed(2)}</span>
+        <span className="mono text-fg">{value.toFixed(2)}</span>
       </div>
       <input
         type="range" min={min} max={max} step={step} value={value}
@@ -45,6 +58,10 @@ function Panel({ initialUseCase }: { initialUseCase: string }) {
   const [m, setM] = useState<any>(null);
   const [ms, setMs] = useState<number>(0);
   const timer = useRef<any>(null);
+  const col = useThemeColors() || {
+    edge: "#232c3d", muted: "#8494ad", panel: "#111722",
+    accent: "#5eb0ff", escal: "#c792ea", bg: "#0a0e14",
+  };
 
   function reset(next: string) {
     setUc(next);
@@ -80,7 +97,7 @@ function Panel({ initialUseCase }: { initialUseCase: string }) {
         <select
           value={uc}
           onChange={(e) => reset(e.target.value)}
-          className="rounded-md border border-edge bg-panel2 px-2 py-1 text-xs text-white"
+          className="rounded-md border border-edge bg-panel2 px-2 py-1 text-xs text-fg"
         >
           {USE_CASES.map((u) => (
             <option key={u.id} value={u.id}>{u.label}</option>
@@ -114,18 +131,18 @@ function Panel({ initialUseCase }: { initialUseCase: string }) {
         <div className="h-[190px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={curve} margin={{ top: 6, right: 8, bottom: 0, left: -22 }}>
-              <CartesianGrid stroke="#232c3d" strokeDasharray="2 3" />
+              <CartesianGrid stroke={col.edge} strokeDasharray="2 3" />
               <XAxis dataKey="recall" type="number" domain={[0, 1]}
-                tick={{ fill: "#8494ad", fontSize: 9 }} tickCount={6} />
+                tick={{ fill: col.muted, fontSize: 9 }} tickCount={6} />
               <YAxis dataKey="precision" type="number" domain={[0, 1]}
-                tick={{ fill: "#8494ad", fontSize: 9 }} tickCount={6} />
+                tick={{ fill: col.muted, fontSize: 9 }} tickCount={6} />
               <Tooltip
-                contentStyle={{ background: "#111722", border: "1px solid #232c3d", fontSize: 11 }}
-                labelStyle={{ color: "#8494ad" }} />
-              <Line type="monotone" dataKey="precision" stroke="#5eb0ff" dot={false} strokeWidth={2} />
+                contentStyle={{ background: col.panel, border: `1px solid ${col.edge}`, fontSize: 11 }}
+                labelStyle={{ color: col.muted }} />
+              <Line type="monotone" dataKey="precision" stroke={col.accent} dot={false} strokeWidth={2} />
               {m?.current_point && (
                 <ReferenceDot x={m.current_point.recall} y={m.current_point.precision}
-                  r={5} fill="#c792ea" stroke="#0a0e14" />
+                  r={5} fill={col.escal} stroke={col.bg} />
               )}
             </LineChart>
           </ResponsiveContainer>
@@ -138,14 +155,14 @@ function Panel({ initialUseCase }: { initialUseCase: string }) {
       {/* metrics */}
       {m && (
         <div className="grid grid-cols-2 gap-2 px-4 pb-4 sm:grid-cols-4">
-          <Stat label="precision" value={m.precision.toFixed(2)} tone="good" />
-          <Stat label="recall" value={m.recall.toFixed(2)} tone={m.recall < 0.8 ? "bad" : "good"} />
-          <Stat label="F2" value={m.f2.toFixed(2)} />
-          <Stat label="FP rate" value={m.fp_rate.toFixed(2)} tone={m.fp_rate > 0.1 ? "warn" : "good"} />
-          <Stat label="FN rate" value={m.fn_rate.toFixed(2)} tone={m.fn_rate > 0.15 ? "warn" : "good"} />
-          <Stat label="escal / 1k" value={m.escalations_per_1000} sub="irreversible" />
-          <Stat label="reviewer hrs/wk" value={m.reviewer_hours_per_week} tone="warn" />
-          <Stat label="$ / 1k" value={m.cost_per_1000_usd.toFixed(4)} sub={`p95 +${m.added_p95_latency_ms}ms`} />
+          <Stat label="precision" value={m.precision.toFixed(2)} tone="good" help={METRIC_HELP["precision"]} />
+          <Stat label="recall" value={m.recall.toFixed(2)} tone={m.recall < 0.8 ? "bad" : "good"} help={METRIC_HELP["recall"]} />
+          <Stat label="F2" value={m.f2.toFixed(2)} help={METRIC_HELP["F2"]} />
+          <Stat label="FP rate" value={m.fp_rate.toFixed(2)} tone={m.fp_rate > 0.1 ? "warn" : "good"} help={METRIC_HELP["FP rate"]} />
+          <Stat label="FN rate" value={m.fn_rate.toFixed(2)} tone={m.fn_rate > 0.15 ? "warn" : "good"} help={METRIC_HELP["FN rate"]} />
+          <Stat label="escal / 1k" value={m.escalations_per_1000} sub="irreversible" help={METRIC_HELP["escal / 1k"]} />
+          <Stat label="reviewer hrs/wk" value={m.reviewer_hours_per_week} tone="warn" help={METRIC_HELP["reviewer hrs/wk"]} />
+          <Stat label="$ / 1k" value={m.cost_per_1000_usd.toFixed(4)} sub={`p95 +${m.added_p95_latency_ms}ms`} help={METRIC_HELP["$ / 1k"]} />
         </div>
       )}
     </div>

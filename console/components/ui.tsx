@@ -55,14 +55,34 @@ export function Meter({ value, tone = "accent", label }: any) {
   );
 }
 
-export function Stat({ label, value, sub, tone }: any) {
+export function Stat({ label, value, sub, tone, help }: any) {
   const color =
-    tone === "bad" ? "text-bad" : tone === "good" ? "text-good" : tone === "warn" ? "text-warn" : "text-white";
+    tone === "bad" ? "text-bad" : tone === "good" ? "text-good" : tone === "warn" ? "text-warn" : "text-fg";
   return (
-    <div className="rounded-lg border border-edge bg-panel2 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted">{label}</div>
+    <div
+      title={help}
+      className={`rounded-lg border border-edge bg-panel2 px-3 py-2 ${help ? "cursor-help" : ""}`}
+    >
+      <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted">
+        {label}
+        {help && <span className="opacity-50" aria-hidden>ⓘ</span>}
+      </div>
       <div className={`mt-0.5 text-lg font-semibold mono ${color}`}>{value}</div>
       {sub && <div className="text-[10px] text-muted mono">{sub}</div>}
+    </div>
+  );
+}
+
+// A compact horizontal legend for verdicts / categories.
+export function Legend({ items }: { items: { swatch: string; label: string; hint?: string }[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      {items.map((it) => (
+        <span key={it.label} title={it.hint} className="flex items-center gap-1.5 text-[11px] text-muted">
+          <span className={`inline-block h-2.5 w-2.5 rounded-sm ${it.swatch}`} />
+          {it.label}
+        </span>
+      ))}
     </div>
   );
 }

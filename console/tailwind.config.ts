@@ -1,5 +1,10 @@
 import type { Config } from "tailwindcss";
 
+// Colors are CSS variables (space-separated RGB channels) so Tailwind's alpha
+// modifiers (bg-good/10, border-accent/40) keep working while the palette swaps
+// between light and dark. Values live in app/globals.css.
+const c = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -8,16 +13,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#0a0e14",
-        panel: "#111722",
-        panel2: "#161d2b",
-        edge: "#232c3d",
-        muted: "#8494ad",
-        accent: "#5eb0ff",
-        good: "#3ddc97",
-        warn: "#ffcb6b",
-        bad: "#ff6b81",
-        escal: "#c792ea",
+        bg: c("bg"),
+        ink: c("bg"), // alias: existing bg-ink usages map to the page background
+        panel: c("panel"),
+        panel2: c("panel2"),
+        edge: c("edge"),
+        muted: c("muted"),
+        fg: c("fg"),
+        accent: c("accent"),
+        good: c("good"),
+        warn: c("warn"),
+        bad: c("bad"),
+        escal: c("escal"),
       },
       fontFamily: {
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],

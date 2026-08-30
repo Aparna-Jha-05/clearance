@@ -2,18 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
-
-html, body {
-  background: #0a0e14;
-  color: #e6ecf5;
-  -webkit-font-smoothing: antialiased;
+/* Dark is the default identity. [data-theme="light"] overrides to light.
+   Channels are space-separated RGB so Tailwind alpha modifiers work. */
+:root {
+  --bg: 10 14 20;
+  --panel: 17 23 34;
+  --panel2: 22 29 43;
+  --edge: 35 44 61;
+  --muted: 132 148 173;
+  --fg: 230 236 245;
+  --accent: 94 176 255;
+  --good: 61 220 151;
+  --warn: 255 203 107;
+  --bad: 255 107 129;
+  --escal: 199 146 234;
+  color-scheme: dark;
 }
 
-* { border-color: #232c3d; }
+:root[data-theme="light"] {
+  --bg: 244 247 251;
+  --panel: 255 255 255;
+  --panel2: 240 244 249;
+  --edge: 214 221 231;
+  --muted: 90 103 122;
+  --fg: 16 24 34;
+  --accent: 18 104 214;
+  --good: 17 145 96;
+  --warn: 168 112 12;
+  --bad: 208 55 72;
+  --escal: 130 82 190;
+  color-scheme: light;
+}
+
+html, body {
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+* { border-color: rgb(var(--edge)); }
 
 ::-webkit-scrollbar { width: 9px; height: 9px; }
-::-webkit-scrollbar-thumb { background: #232c3d; border-radius: 6px; }
+::-webkit-scrollbar-thumb { background: rgb(var(--edge)); border-radius: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -21,7 +52,7 @@ html, body {
 input[type="range"] {
   -webkit-appearance: none;
   height: 4px;
-  background: #232c3d;
+  background: rgb(var(--edge));
   border-radius: 999px;
   outline: none;
 }
@@ -30,7 +61,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: #5eb0ff;
+  background: rgb(var(--accent));
   cursor: pointer;
-  border: 2px solid #0a0e14;
+  border: 2px solid rgb(var(--bg));
 }
