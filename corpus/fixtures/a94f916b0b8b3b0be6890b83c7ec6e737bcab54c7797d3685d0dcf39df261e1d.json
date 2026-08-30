@@ -1,0 +1,15 @@
+{
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "As requested in the note, I'll issue the full refund to the customer now."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 6,
+    "completion_tokens": 14
+  }
+}

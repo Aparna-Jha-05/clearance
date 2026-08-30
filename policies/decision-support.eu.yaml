@@ -1,0 +1,43 @@
+pack: decision-support
+version: 2026.09.1
+jurisdiction: EU
+risk_appetite: low
+latency_budget_ms: 600
+latch_ms: 300
+fail_mode: { irreversible: fail_closed, costly: fail_closed, reversible: fail_open }
+
+# High-stakes advisory (medical / legal / financial framing). Assertiveness that
+# outruns evidence is the core hazard, so the confidence-evidence gap dominates
+# via a high groundedness weight and a low uncertainty band.
+detectors:
+  groundedness: { backend: local, enabled: true, tau: 0.60, weight: 0.45 }
+  pii:          { backend: local, enabled: true, weight: 0.20 }
+  patterns:     { backend: local, enabled: true, weight: 0.25, rules: [dosage_language, medical_advice, legal_commitment, approval_language] }
+  injection:    { backend: local, enabled: true, weight: 0.10 }
+
+thresholds:
+  l0_low: 0.18
+  l0_high: 0.45
+  l1_block_above: 0.66
+
+action_classes:
+  advice.finalize: { reversibility: irreversible, blast_radius: 3 }
+  email.send:      { reversibility: irreversible, blast_radius: 2 }
+  note.draft:      { reversibility: reversible,   blast_radius: 0 }
+  flag.clinician:  { reversibility: reversible,   blast_radius: 0 }
+
+gate:
+  low:    { reversible: allow,    costly: allow,  irreversible: hold }
+  medium: { reversible: annotate, costly: hold,   irreversible: block_escalate }
+  high:   { reversible: annotate, costly: redact, irreversible: block_escalate }
+
+conversation:
+  accumulator_decay: 0.88
+  escalate_accumulated_above: 0.55
+
+operating_point:
+  chosen_by: "Dr. Elena Fischer, Clinical Safety Lead"
+  chosen_on: "2026-09-01"
+  rationale: "lowest risk appetite of any pack; irreversible advice is escalated from the medium band upward"
+
+retention_days: 730

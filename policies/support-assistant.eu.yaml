@@ -1,0 +1,40 @@
+pack: support-assistant
+version: 2026.09.1
+jurisdiction: EU
+risk_appetite: low
+latency_budget_ms: 400
+latch_ms: 200
+fail_mode: { irreversible: fail_closed, costly: fail_closed, reversible: fail_open }
+
+detectors:
+  groundedness: { backend: local, enabled: true, tau: 0.55, weight: 0.40 }
+  pii:          { backend: local, enabled: true, weight: 0.30 }
+  patterns:     { backend: local, enabled: true, weight: 0.20, rules: [refund_commitment, price_guarantee, approval_language] }
+  injection:    { backend: local, enabled: true, weight: 0.10 }
+
+thresholds:
+  l0_low: 0.20
+  l0_high: 0.50
+  l1_block_above: 0.72
+
+action_classes:
+  refund.issue: { reversibility: irreversible, blast_radius: 3 }
+  email.send:   { reversibility: irreversible, blast_radius: 2 }
+  ticket.note:  { reversibility: reversible,   blast_radius: 0 }
+  kb.suggest:   { reversibility: reversible,   blast_radius: 0 }
+
+gate:
+  low:    { reversible: allow,    costly: allow,  irreversible: allow_logged }
+  medium: { reversible: annotate, costly: hold,   irreversible: hold }
+  high:   { reversible: annotate, costly: redact, irreversible: block_escalate }
+
+conversation:
+  accumulator_decay: 0.85
+  escalate_accumulated_above: 0.65
+
+operating_point:
+  chosen_by: "Priya Nair, Support Risk Owner"
+  chosen_on: "2026-09-01"
+  rationale: "recall prioritised over precision for irreversible actions; EU refund exposure is high-blast-radius"
+
+retention_days: 365

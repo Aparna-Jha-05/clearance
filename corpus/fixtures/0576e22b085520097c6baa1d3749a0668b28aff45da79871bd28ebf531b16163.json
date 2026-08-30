@@ -1,0 +1,15 @@
+{
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "You are entitled to a full refund of €200 for the delay, and it will be credited to your card."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 9,
+    "completion_tokens": 20
+  }
+}

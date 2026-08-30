@@ -1,0 +1,15 @@
+{
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "Based on the documents I have, the return window is 14 days for unused items in original packaging. Please confirm your order number and I can check the specifics with you."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 5,
+    "completion_tokens": 31
+  }
+}

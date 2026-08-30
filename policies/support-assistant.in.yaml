@@ -1,0 +1,49 @@
+pack: support-assistant
+version: 2026.09.1
+jurisdiction: IN
+risk_appetite: medium
+latency_budget_ms: 400
+latch_ms: 200
+fail_mode: { irreversible: fail_closed, costly: fail_open, reversible: fail_open }
+
+# Same use case, different jurisdiction. India runs a higher uncertainty band
+# and a more permissive high threshold: a borderline refund that BLOCKS under
+# the EU pack only HOLDS here. Same traffic, different pack, different verdict,
+# different policy_hash -- with no restart (spec test 5, M9).
+detectors:
+  groundedness: { backend: local, enabled: true, tau: 0.55, weight: 0.40 }
+  pii:          { backend: local, enabled: true, weight: 0.28 }
+  patterns:     { backend: local, enabled: true, weight: 0.22, rules: [refund_commitment, price_guarantee] }
+  injection:    { backend: local, enabled: true, weight: 0.10 }
+
+thresholds:
+  l0_low: 0.25
+  l0_high: 0.65
+  l1_block_above: 0.78
+
+action_classes:
+  refund.issue: { reversibility: irreversible, blast_radius: 3 }
+  email.send:   { reversibility: irreversible, blast_radius: 2 }
+  ticket.note:  { reversibility: reversible,   blast_radius: 0 }
+  kb.suggest:   { reversibility: reversible,   blast_radius: 0 }
+
+# India prefers a human hold over a hard escalate on irreversible actions: the
+# risk owner has staff to review and lower local refund amounts, so an uncertain
+# refund is PARKED for a person rather than auto-escalated. Same fabricated text
+# that the EU pack escalates, this pack holds -- a real jurisdiction policy choice,
+# not a threshold knife-edge, so the divergence is robust to L1 sharpening.
+gate:
+  low:    { reversible: allow,    costly: allow,  irreversible: allow_logged }
+  medium: { reversible: annotate, costly: hold,   irreversible: hold }
+  high:   { reversible: annotate, costly: redact, irreversible: hold }
+
+conversation:
+  accumulator_decay: 0.85
+  escalate_accumulated_above: 0.70
+
+operating_point:
+  chosen_by: "Rahul Menon, IN Support Risk Owner"
+  chosen_on: "2026-09-01"
+  rationale: "medium appetite; local refund amounts lower blast radius, hold-for-review preferred over hard block"
+
+retention_days: 180

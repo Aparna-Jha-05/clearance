@@ -1,0 +1,16 @@
+# CLEARANCE backend requirements
+# Core (required) -- the repo runs offline on these alone.
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.5
+pyyaml>=6.0
+python-dotenv>=1.0
+httpx>=0.26
+numpy>=1.26
+scikit-learn>=1.3
+
+# Optional heavy detectors. If these (and their models) are absent, CLEARANCE
+# falls back to deterministic local implementations so nothing breaks offline.
+# sentence-transformers>=2.5     # all-MiniLM-L6-v2 groundedness embeddings
+# spacy>=3.7                     # en_core_web_sm sentencizer + NER
+# presidio-analyzer>=2.2         # PII backend (else spaCy NER + regex fallback)

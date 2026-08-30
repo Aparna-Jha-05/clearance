@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CLEARANCE policy pack",
+  "type": "object",
+  "required": ["pack", "version", "jurisdiction", "detectors", "thresholds",
+               "action_classes", "gate", "fail_mode"],
+  "properties": {
+    "pack": { "type": "string", "description": "use-case id" },
+    "version": { "type": "string" },
+    "jurisdiction": { "type": "string" },
+    "risk_appetite": { "enum": ["low", "medium", "high"] },
+    "latency_budget_ms": { "type": "integer", "minimum": 0 },
+    "latch_ms": { "type": "integer", "minimum": 0,
+      "description": "deadline for a parked action before fail_mode applies" },
+    "fail_mode": {
+      "type": "object",
+      "description": "per-reversibility behavior on latch timeout",
+      "properties": {
+        "irreversible": { "enum": ["fail_closed", "fail_open"] },
+        "costly": { "enum": ["fail_closed", "fail_open"] },
+        "reversible": { "enum": ["fail_closed", "fail_open"] }
+      }
+    },
+    "detectors": {
+      "type": "object",
+      "description": "each detector names a backend (local | patronus | ...) and a fusion weight",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "backend": { "type": "string" },
+          "enabled": { "type": "boolean" },
+          "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+          "tau": { "type": "number", "minimum": 0, "maximum": 1 },
+          "rules": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "required": ["l0_low", "l0_high", "l1_block_above"],
+      "properties": {
+        "l0_low": { "type": "number", "description": "flag above this; below is a confident allow" },
+        "l0_high": { "type": "number", "description": "escalate above this; the uncertainty band is [l0_low, l0_high)" },
+        "l1_block_above": { "type": "number" }
+      }
+    },
+    "action_classes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["reversibility"],
+        "properties": {
+          "reversibility": { "enum": ["reversible", "costly", "irreversible"] },
+          "blast_radius": { "type": "integer", "minimum": 0, "maximum": 3 }
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "description": "gate[band][reversibility] -> verdict",
+      "required": ["low", "medium", "high"],
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "reversible": { "type": "string" },
+          "costly": { "type": "string" },
+          "irreversible": { "type": "string" }
+        }
+      }
+    },
+    "conversation": {
+      "type": "object",
+      "properties": {
+        "accumulator_decay": { "type": "number", "minimum": 0, "maximum": 1 },
+        "escalate_accumulated_above": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "operating_point": {
+      "type": "object",
+      "description": "the signed governance artifact",
+      "required": ["chosen_by", "chosen_on", "rationale"],
+      "properties": {
+        "chosen_by": { "type": "string" },
+        "chosen_on": { "type": "string" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "retention_days": { "type": "integer", "minimum": 0 }
+  }
+}

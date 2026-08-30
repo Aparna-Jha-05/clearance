@@ -1,0 +1,44 @@
+pack: internal-copilot
+version: 2026.09.1
+jurisdiction: IN
+risk_appetite: low
+latency_budget_ms: 500
+latch_ms: 250
+fail_mode: { irreversible: fail_closed, costly: fail_closed, reversible: fail_open }
+
+# Internal copilot over HR / policy docs. PII weight is high: fabricated details
+# about a NAMED colleague are the signature failure here, and they must emerge
+# tagged BOTH privacy and hallucination.
+detectors:
+  groundedness: { backend: local, enabled: true, tau: 0.58, weight: 0.32 }
+  pii:          { backend: local, enabled: true, weight: 0.40 }
+  patterns:     { backend: local, enabled: true, weight: 0.13, rules: [approval_language] }
+  injection:    { backend: local, enabled: true, weight: 0.15 }
+
+thresholds:
+  l0_low: 0.20
+  l0_high: 0.48
+  l1_block_above: 0.70
+
+action_classes:
+  email.send:     { reversibility: irreversible, blast_radius: 2 }
+  refund.issue:   { reversibility: irreversible, blast_radius: 3 }
+  ticket.note:    { reversibility: reversible,   blast_radius: 0 }
+  doc.summarize:  { reversibility: reversible,   blast_radius: 0 }
+  record.update:  { reversibility: costly,       blast_radius: 2 }
+
+gate:
+  low:    { reversible: allow,    costly: allow,  irreversible: allow_logged }
+  medium: { reversible: annotate, costly: hold,   irreversible: hold }
+  high:   { reversible: annotate, costly: redact, irreversible: block_escalate }
+
+conversation:
+  accumulator_decay: 0.85
+  escalate_accumulated_above: 0.60
+
+operating_point:
+  chosen_by: "Ananya Rao, People-Systems Risk Owner"
+  chosen_on: "2026-09-01"
+  rationale: "privacy-weighted; fabricated named-person detail is the dominant failure mode for an internal copilot"
+
+retention_days: 365
